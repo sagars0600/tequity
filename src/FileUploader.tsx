@@ -47,7 +47,6 @@ const FileUploader: React.FC = () => {
     pauseRef.current = isPaused;
   }, [isPaused]);
 
-
   const handleFiles = (fileList: FileList) => {
     const newFiles: UploadFile[] = Array.from(fileList).map((file) => ({
       file,
@@ -184,12 +183,15 @@ const FileUploader: React.FC = () => {
         );
         setLiveMessage(`Completed upload of ${uploadFile.relativePath}`);
         return;
-      } catch (err: any) {
-        if (err.message === 'Upload paused') {
+      } catch (err: unknown) {
+        // Convert to Error type if it has a 'message' property
+        const error = err as { message?: string; status?: number };
 
+        if (error.message === 'Upload paused') {
           return;
         }
-        if (err?.status >= 500 && err?.status < 600) {
+
+        if (typeof error.status === 'number' && error.status >= 500 && error.status < 600) {
           attempt++;
           if (attempt <= MAX_RETRIES) {
             setLiveMessage(
@@ -221,6 +223,7 @@ const FileUploader: React.FC = () => {
           return;
         }
       }
+
     }
   };
 
@@ -392,10 +395,12 @@ const FileUploader: React.FC = () => {
           type="file"
           multiple
           className="hidden"
-          // {...{ webkitdirectory: 'true' }} 
+          // eslint-disable-next-line
+          {...({ webkitdirectory: true } as any)}
           onChange={(e) => {
             if (e.target.files) handleFiles(e.target.files);
           }}
+          accept=".jpg,.png,.pdf"
         />
       </div>
 
