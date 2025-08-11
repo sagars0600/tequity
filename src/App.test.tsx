@@ -1,9 +1,16 @@
+// app.test.tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { axe, toHaveNoViolations } from 'jest-axe';
 import App from './App';
+import FileUploader from './FileUploader';
 
-test('renders learn react link', () => {
+expect.extend(toHaveNoViolations);
+
+
+test('renders bulk document uploader title', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const titleElement = screen.getByText(/bulk document uploader/i);
+  expect(titleElement).toBeInTheDocument();
 });
+
