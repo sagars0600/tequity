@@ -9,6 +9,7 @@ interface UploadFile {
   status: FileStatus;
   progress: number;
   retries: number;
+  controller?: AbortController;
 }
 
 const MAX_CONCURRENT_UPLOADS = 3;
@@ -184,7 +185,7 @@ const FileUploader: React.FC = () => {
         setLiveMessage(`Completed upload of ${uploadFile.relativePath}`);
         return;
       } catch (err: unknown) {
-        // Convert to Error type if it has a 'message' property
+       
         const error = err as { message?: string; status?: number };
 
         if (error.message === 'Upload paused') {
@@ -256,6 +257,12 @@ const FileUploader: React.FC = () => {
       return newPaused;
     });
   };
+
+  const removeFile = (relativePath: string) => {
+    setFiles((prev) => prev.filter((f) => f.relativePath !== relativePath));
+    queue.current = queue.current.filter((f) => f.relativePath !== relativePath);
+  };
+
   const isUploadingOrQueued = files.some(
     (f) => f.status === 'Uploading' || f.status === 'Queued' || f.status === 'Paused'
   );
@@ -417,9 +424,8 @@ const FileUploader: React.FC = () => {
                 aria-label={`${file.relativePath}, size ${file.size}, status ${file.status}, progress ${file.progress}%`}
                 className="rounded-md bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {/* Top Row: Filename + Status + Size */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  {/* Icon + Filename */}
+
                   <div className="flex items-center gap-3 min-w-0">
                     {file.status === 'Done' ? (
                       <svg
@@ -438,19 +444,15 @@ const FileUploader: React.FC = () => {
                     <p className="truncate font-medium text-gray-700">{file.relativePath}</p>
                   </div>
 
-                  {/* File size + Status + % */}
+
                   <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:gap-6 sm:items-center">
-                    {/* File Size */}
                     <span className="text-sm text-gray-600 whitespace-nowrap">
-                      {typeof file.size === 'number'
-                        ? `${(file.size / 1024).toFixed(1)} KB`
-                        : file.size}
+                      {file.size}
                     </span>
 
-                    {/* Status Badge */}
                     <span
                       className={`text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap
-                  ${file.status === 'Done'
+        ${file.status === 'Done'
                           ? 'bg-green-700 text-green-300'
                           : file.status === 'Uploading'
                             ? 'bg-blue-700 text-blue-300'
@@ -458,22 +460,34 @@ const FileUploader: React.FC = () => {
                               ? 'bg-yellow-600 text-yellow-300'
                               : file.status === 'Error'
                                 ? 'bg-red-700 text-red-300'
-                                : 'bg-gray-700 text-gray-400'
-                        }`}
+                                : 'bg-gray-700 text-gray-400'}`}
                     >
-                      {file.status === 'Done'
-                        ? 'Done'
-                        : file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                      {file.status}
                     </span>
 
-                    {/* % Progress */}
                     <span className="text-sm font-mono text-gray-700 whitespace-nowrap">
                       {file.progress}%
                     </span>
+
+
+                    <button
+                      onClick={() => removeFile(file.relativePath)}
+                      className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+
+                    </button>
                   </div>
                 </div>
 
-                {/* Progress bar (always below) */}
                 <div className="mt-3">
                   <div className="h-2 rounded-full bg-gray-300 overflow-hidden">
                     <div
